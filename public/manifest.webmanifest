@@ -1,0 +1,12 @@
+{
+  "name": "AI Family Signature Artwork",
+  "short_name": "Signature Art",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#F3EED6",
+  "theme_color": "#2C3E5C",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
