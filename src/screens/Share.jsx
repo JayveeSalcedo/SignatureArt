@@ -19,9 +19,9 @@ export default function Share() {
   useEffect(() => {
     if (!cloudEnabled) return;
     let live = true;
-    whenSaved(art.id).then(() => live && setLink(publicUrl(artworkPath(art.id))));
+    whenSaved(art.id).then(() => live && setLink(publicUrl(artworkPath(art.id), fileName)));
     return () => { live = false; };
-  }, [art.id]);
+  }, [art.id, fileName]);
 
   const run = async (fn) => {
     setBusy(true); setStatus('');

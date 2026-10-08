@@ -19,8 +19,12 @@ export const cloudEnabled = !!supabase;
 
 export const artworkPath = (id) => `${id}/artwork.png`;
 
-/** Public link to a stored file. The bucket can't be listed, so the session id keeps it private. */
-export const publicUrl = (path) => supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+/**
+ * Public link to a stored file. The bucket can't be listed, so the session id keeps it private.
+ * With `download` (a file name) the link makes the browser save the file instead of showing it.
+ */
+export const publicUrl = (path, download) =>
+  supabase.storage.from(BUCKET).getPublicUrl(path, download ? { download } : undefined).data.publicUrl;
 
 // Resolves once a session's upload has finished (it may still be queued offline)
 const saved = new Map();
