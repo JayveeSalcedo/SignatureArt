@@ -40,6 +40,18 @@ first (`src/lib/cloud.js`), so a kiosk that goes offline uploads them when it re
 Without these variables the app runs as before and saves nothing. The kiosk can only insert;
 browse the saved families in the Supabase dashboard (Table Editor, Storage).
 
+## Dashboard (`/admin`)
+Staff can browse, search, download, export (CSV) and delete saved families at `/admin`.
+It's unlocked with one shared password (no user accounts). The page talks to the Vercel
+function `api/admin.js`, which holds the Supabase service role key, so the kiosk's public key
+still can't read any data.
+
+Set these server-only variables in `.env.local` and on Vercel (no `VITE_` prefix):
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase → Project Settings → API (secret)
+- `ADMIN_PASSWORD`: the dashboard password
+
+`npm run dev` serves the function too (see `vite.config.js`), so `/admin` works locally.
+
 ## Deploy to Vercel
 `vercel.json` is included (Vite preset, `dist/` output, long-term caching for hashed assets, SPA fallback).
 
