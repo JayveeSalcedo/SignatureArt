@@ -1,16 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { INK, PALETTES } from '../data';
 import { useKiosk } from '../KioskContext';
 import { Art, ArtContent } from '../components/Art';
 import { View } from '../components/View';
 import { downloadBlob, renderArtPNG } from '../lib/render';
+import { artworkPath, cloudEnabled, publicUrl, whenSaved } from '../lib/cloud';
 
 export default function Share() {
   const { art, pal, title, surname, reset } = useKiosk();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
+  const [link, setLink] = useState(null);
   const P = PALETTES[pal];
   const fileName = `${(surname.trim() || 'family').replace(/\s+/g, '-').toLowerCase()}-signature-artwork.png`;
+
+  // QR code to the uploaded artwork, shown once its upload has finished
+  useEffect(() => {
+    if (!cloudEnabled) return;
+    let live = true;
+    whenSaved(art.id).then(() => live && setLink(publicUrl(artworkPath(art.id))));
+    return () => { live = false; };
+  }, [art.id]);
 
   const run = async (fn) => {
     setBusy(true); setStatus('');
@@ -67,9 +78,16 @@ export default function Share() {
           </svg>
         </div>
         <div className="phone">
-          <div className="mini"><Art art={art} pal={P} lite /></div>
+          {link ? (
+            <div className="qr">
+              <QRCodeSVG value={link} size={150} marginSize={2} fgColor={INK} bgColor="#FFFFFF" title="Scan to download your artwork" />
+              <small>Scan with your phone to download<br />امسحوا الرمز للتحميل</small>
+            </div>
+          ) : (
+            <div className="mini"><Art art={art} pal={P} lite /></div>
+          )}
           <b>{title}</b>
-          <small>Keep a digital copy of your artwork</small>
+          <small>{cloudEnabled && !link ? 'Preparing your download link…' : 'Keep a digital copy of your artwork'}</small>
           <div className="acts">
             <button className="btn primary" disabled={busy} onClick={download}>Download</button>
             <button className="btn" disabled={busy} onClick={share}>Share</button>

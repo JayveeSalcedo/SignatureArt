@@ -20,10 +20,12 @@ drop policy if exists "kiosk can insert" on public.families;
 create policy "kiosk can insert" on public.families
   for insert to anon with check (true);
 
--- Private bucket for the artwork and signature PNGs
+-- Bucket for the artwork and signature PNGs. Files are readable by direct link
+-- (for the download QR code) but the bucket can't be listed, and each link
+-- contains the session's random id.
 insert into storage.buckets (id, name, public)
-values ('artworks', 'artworks', false)
-on conflict (id) do nothing;
+values ('artworks', 'artworks', true)
+on conflict (id) do update set public = true;
 
 drop policy if exists "kiosk can upload artworks" on storage.objects;
 create policy "kiosk can upload artworks" on storage.objects

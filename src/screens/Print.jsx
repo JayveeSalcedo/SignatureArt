@@ -4,7 +4,7 @@ import { useKiosk } from '../KioskContext';
 import { Art } from '../components/Art';
 import { View } from '../components/View';
 import { renderArtPNG, renderSigPNG } from '../lib/render';
-import { saveSession } from '../lib/cloud';
+import { artworkPath, saveSession } from '../lib/cloud';
 
 const MSGS = ['Printing colour layers', 'Sealing for a lasting finish', 'Ready to hang'];
 
@@ -51,7 +51,7 @@ export default function Print() {
 async function archive(art, P, title, surname, members) {
   const dir = art.id;
   const signed = members.filter((m) => m.sig);
-  const files = { [`${dir}/artwork.png`]: await renderArtPNG(art, P, title) };
+  const files = { [artworkPath(dir)]: await renderArtPNG(art, P, title) };
   const rows = [];
   for (const [i, m] of signed.entries()) {
     const path = `${dir}/signatures/${i + 1}.png`;
@@ -65,6 +65,6 @@ async function archive(art, P, title, surname, members) {
     design: art.design,
     palette: P.k,
     members: rows,
-    artwork_path: `${dir}/artwork.png`,
+    artwork_path: artworkPath(dir),
   }, files);
 }

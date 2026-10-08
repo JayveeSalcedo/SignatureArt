@@ -15,6 +15,24 @@ const BUCKET = 'artworks';
 const RETRY_MS = 60000;
 
 const supabase = URL_ && KEY ? createClient(URL_, KEY, { auth: { persistSession: false } }) : null;
+export const cloudEnabled = !!supabase;
+
+export const artworkPath = (id) => `${id}/artwork.png`;
+
+/** Public link to a stored file. The bucket can't be listed, so the session id keeps it private. */
+export const publicUrl = (path) => supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+
+// Resolves once a session's upload has finished (it may still be queued offline)
+const saved = new Map();
+function waiter(id) {
+  if (!saved.has(id)) {
+    let resolve;
+    const promise = new Promise((r) => { resolve = r; });
+    saved.set(id, { promise, resolve });
+  }
+  return saved.get(id);
+}
+export const whenSaved = (id) => waiter(id).promise;
 
 // --- tiny IndexedDB queue ----------------------------------------------------
 
@@ -49,21 +67,27 @@ async function upload({ row, files }) {
   if (error && !isDuplicate(error)) throw error;
 }
 
-let flushing = false;
+let flushing = false, again = false;
 /** Upload every queued session; failures stay queued for the next attempt. */
 export async function flush() {
-  if (!supabase || flushing || !navigator.onLine) return;
+  if (!supabase || !navigator.onLine) return;
+  // a session queued mid-flush is picked up by another pass rather than waiting for the timer
+  if (flushing) { again = true; return; }
   flushing = true;
   try {
-    const pending = await tx('readonly', (s) => s.getAll());
-    for (const item of pending) {
-      try {
-        await upload(item);
-        await tx('readwrite', (s) => s.delete(item.row.id));
-      } catch (e) {
-        console.warn('Supabase upload failed, will retry', e);
+    do {
+      again = false;
+      const pending = await tx('readonly', (s) => s.getAll());
+      for (const item of pending) {
+        try {
+          await upload(item);
+          await tx('readwrite', (s) => s.delete(item.row.id));
+          waiter(item.row.id).resolve();
+        } catch (e) {
+          console.warn('Supabase upload failed, will retry', e);
+        }
       }
-    }
+    } while (again);
   } finally {
     flushing = false;
   }

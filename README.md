@@ -27,7 +27,9 @@ All fonts (Oswald, Noto Sans, Noto Naskh/Sans Arabic, Caveat, Aref Ruqaa) are bu
 ## Saving sessions (Supabase)
 When a family taps **Print on canvas**, the session is saved to Supabase: a row in `families`
 (family name, design, colour story, member names, raw strokes) plus the artwork PNG and one PNG per
-signature in the private `artworks` bucket, under `<session id>/`. Sessions are queued in IndexedDB
+signature in the `artworks` bucket, under `<session id>/`. The Share screen shows a QR code
+linking to the uploaded artwork so families can download it on their phone (the bucket allows reads
+by direct link only; it can't be listed). Sessions are queued in IndexedDB
 first (`src/lib/cloud.js`), so a kiosk that goes offline uploads them when it reconnects.
 
 1. Create a project at supabase.com.
