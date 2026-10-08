@@ -3,11 +3,13 @@ import { PALETTES } from '../data';
 import { useKiosk } from '../KioskContext';
 import { Art } from '../components/Art';
 import { View } from '../components/View';
+import { renderArtPNG, renderSigPNG } from '../lib/render';
+import { saveSession } from '../lib/cloud';
 
 const MSGS = ['Printing colour layers', 'Sealing for a lasting finish', 'Ready to hang'];
 
 export default function Print() {
-  const { art, pal, go } = useKiosk();
+  const { art, pal, go, surname, title, members } = useKiosk();
   const [msg, setMsg] = useState('Preparing canvas · 40 × 50 cm');
   const [ready, setReady] = useState(false);
 
@@ -19,6 +21,14 @@ export default function Print() {
     timers.push(setTimeout(() => setReady(true), 1500 * MSGS.length));
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // The design and colours are final once printing starts, so archive the session.
+  // Keyed by art.id, so a repeated save (e.g. StrictMode's double effect) is harmless.
+  useEffect(() => {
+    archive(art, PALETTES[pal], title, surname, members)
+      .catch((e) => console.warn('Could not save session', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [art.id]);
 
   return (
     <View
@@ -36,4 +46,25 @@ export default function Print() {
       </div>
     </View>
   );
+}
+
+async function archive(art, P, title, surname, members) {
+  const dir = art.id;
+  const signed = members.filter((m) => m.sig);
+  const files = { [`${dir}/artwork.png`]: await renderArtPNG(art, P, title) };
+  const rows = [];
+  for (const [i, m] of signed.entries()) {
+    const path = `${dir}/signatures/${i + 1}.png`;
+    files[path] = await renderSigPNG(m.sig, m.color);
+    rows.push({ name: m.label.trim() || m.role, color: m.color, image_path: path, strokes: m.strokes });
+  }
+  await saveSession({
+    id: art.id,
+    family_name: surname.trim() || null,
+    title,
+    design: art.design,
+    palette: P.k,
+    members: rows,
+    artwork_path: `${dir}/artwork.png`,
+  }, files);
 }

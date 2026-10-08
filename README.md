@@ -24,6 +24,20 @@ The session resets to the welcome screen after 2 minutes without a touch (`IDLE_
 
 All fonts (Oswald, Noto Sans, Noto Naskh/Sans Arabic, Caveat, Aref Ruqaa) are bundled via Fontsource (`src/fonts.js`), so the kiosk runs fully offline.
 
+## Saving sessions (Supabase)
+When a family taps **Print on canvas**, the session is saved to Supabase: a row in `families`
+(family name, design, colour story, member names, raw strokes) plus the artwork PNG and one PNG per
+signature in the private `artworks` bucket, under `<session id>/`. Sessions are queued in IndexedDB
+first (`src/lib/cloud.js`), so a kiosk that goes offline uploads them when it reconnects.
+
+1. Create a project at supabase.com.
+2. SQL Editor → run `supabase/schema.sql` (table, bucket and insert-only policies).
+3. Copy `.env.example` to `.env.local` and fill in the URL and anon/publishable key
+   (Project Settings → API). On Vercel, add the same two variables under Settings → Environment Variables.
+
+Without these variables the app runs as before and saves nothing. The kiosk can only insert;
+browse the saved families in the Supabase dashboard (Table Editor, Storage).
+
 ## Deploy to Vercel
 `vercel.json` is included (Vite preset, `dist/` output, long-term caching for hashed assets, SPA fallback).
 

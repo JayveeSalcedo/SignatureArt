@@ -57,6 +57,18 @@ export async function renderArtPNG(art, pal, title, width = 1600) {
   return new Promise((res) => c.toBlob(res, 'image/png'));
 }
 
+/** Render one normalized signature in its ink colour on a transparent PNG. */
+export function renderSigPNG(sig, color, height = 240) {
+  const pad = height * 0.1, k = height - 2 * pad;
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(sig.w * k + 2 * pad); c.height = height;
+  const g = c.getContext('2d');
+  g.translate(c.width / 2, height / 2); g.scale(k, k);
+  g.lineWidth = sig.sw; g.lineCap = g.lineJoin = 'round'; g.strokeStyle = color;
+  g.stroke(sigPath(sig));
+  return new Promise((res) => c.toBlob(res, 'image/png'));
+}
+
 export function downloadBlob(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

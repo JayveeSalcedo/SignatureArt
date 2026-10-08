@@ -20,7 +20,7 @@ export default function Create() {
     later(() => {
       const mem = signed.map((m) => ({ kind: 'sig', sig: m.sig }));
       const items = layout(design, mem, seedFor(design, signed.map((m) => m.strokes)));
-      setArt({ design, members: mem, items });
+      setArt({ id: crypto.randomUUID(), design, members: mem, items });
       setPhase(2);
       later(() => setPhase(3), 1250);
       later(() => setPhase(4), 2500);
